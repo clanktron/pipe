@@ -1,18 +1,32 @@
-## UID: 123456789
-(IMPORTANT: Only replace the above numbers with your true UID, do not modify spacing and newlines, otherwise your tarfile might not be created correctly)
+## UID: 005412538
 
 ## Pipe Up
 
-One sentence description
+The binary pipes together all listed commands, the first one taking input from stdin and the last one printing to stdout.
 
 ## Building
 
-Explain briefly how to build your program
+Clone the repository and run the following:
+```bash
+# compile the binary
+make
+```
 
 ## Running
 
-Show an example run of your program, using at least two additional arguments, and what to expect
+Example usage:
+```bash
+# one argument (should output the same as ls would by itself)
+./pipe ls
+# multiple arguments (ls output should be piped to cat, which should ouput to stdout)
+./pipe ls cat
+# multiple arguments (stdout should be result of less)
+./pipe ls cat cat less
+```
 
 ## Cleaning up
 
-Explain briefly how to clean up all binary files
+```bash
+# remove object and binary files from compilation
+make clean
+```
