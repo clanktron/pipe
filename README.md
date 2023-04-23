@@ -27,6 +27,6 @@ Example usage:
 ## Cleaning up
 
 ```bash
-# remove object and binary files from compilation
+# remove object/binary/cache files from compilation
 make clean
 ```

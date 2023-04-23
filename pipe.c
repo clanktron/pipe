@@ -34,12 +34,15 @@ int main(int argc, char *argv[])
                 // fprintf(stderr, "child process %s, closing old pipe write end %d, assigning stidn to old read end, closing old pipe read end %d...\n", argv[i], oldfd[1], oldfd[0]);
                 if (close(oldfd[1]) == -1) {
                     perror(child_error);
+                    return -1;
                 }
                 if (dup2(oldfd[0], STDIN_FILENO) == -1) {
                     perror(child_error);
+                    return -1;
                 }; 
                 if (close(oldfd[0]) == -1) {
                     perror(child_error);
+                    return -1;
                 }
 
             } 
@@ -50,17 +53,21 @@ int main(int argc, char *argv[])
                 // fprintf(stderr, "child process %s, closing new pipe read end %d, assigning stdout to new pipe write end, closing new pipe write end %d...\n", argv[i], newfd[0], newfd[1]);
                 if (close(newfd[0]) == -1) {
                     perror(child_error);
+                    return -1;
                 };
                 if (dup2(newfd[1], STDOUT_FILENO) == -1) {
                     perror(child_error);
+                    return -1;
                 };
                 if (close(newfd[1]) == -1) {
                     perror(child_error);
+                    return -1;
                 };
             }         
 
             if (execlp(argv[i], argv[i], NULL) == -1) {
                 perror(child_error);
+                return -1;
             }
 
         } else if (return_code > 0) {
@@ -69,9 +76,11 @@ int main(int argc, char *argv[])
             if (i > 1) {
                 if (close(oldfd[0]) == -1) {
                     perror(parent_error);
+                    return -1;
                 };
                 if (close(oldfd[1]) == -1) {
                     perror(parent_error);
+                    return -1;
                 };
             } 
 
@@ -85,12 +94,14 @@ int main(int argc, char *argv[])
             int child_status;
             waitpid(pid, &child_status, 0);
 
-            if (WIFEXITED(child_status)) {
-                fprintf(stderr, "child %d ended normally, exit status %d\n", i, WEXITSTATUS(child_status));
+            if (WEXITSTATUS(child_status) != 0) {
+                fprintf(stderr, "child %d ended abnormally with exit status %d\n", i, WEXITSTATUS(child_status));
+                return -1;
             }
 
         } else {
             fprintf(stderr, "Failed to create child process properly\n");
+            return -1;
         }
 
     }

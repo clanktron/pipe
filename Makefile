@@ -11,4 +11,4 @@ tar:
 	@tar -cf ${UID}-lab1-submission.tar pipe.c README.md
 .PHONY: clean
 clean:
-	@rm -f ${OBJS} pipe
+	@rm -rf ${OBJS} pipe __pycache__
