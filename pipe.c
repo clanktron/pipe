@@ -1,3 +1,4 @@
+#include <asm-generic/errno-base.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -7,42 +8,44 @@
 
 int main(int argc, char *argv[])
 {
+    // return error if no args are specified
+    if (argc <= 1) {
+        fprintf(stderr, "Need at least one argument\n");
+        exit(EINVAL);
+    }
 
     // init file descriptor arrays
-
     int oldfd[2];
     int newfd[2];
     const char child_error[] = "Child Error: ";
     const char parent_error[] = "Parent Error: ";
 
+    // loop over given commands
     for (int i = 1; i < argc; i++) {
 
         // if there is a next command create new pipe
         if (i < argc-1) {
-            // fprintf(stderr, "creating new pipe...\n");
             pipe(newfd);
         }
 
         int return_code = fork();
 
+        // child process
         if (return_code == 0) {
-            // printf("Child process %d is running...\n", i);
-
             // if there was a previous command
             if (i > 1) {
 
-                // fprintf(stderr, "child process %s, closing old pipe write end %d, assigning stidn to old read end, closing old pipe read end %d...\n", argv[i], oldfd[1], oldfd[0]);
                 if (close(oldfd[1]) == -1) {
                     perror(child_error);
-                    return -1;
+                    return errno;
                 }
                 if (dup2(oldfd[0], STDIN_FILENO) == -1) {
                     perror(child_error);
-                    return -1;
+                    return errno;
                 }; 
                 if (close(oldfd[0]) == -1) {
                     perror(child_error);
-                    return -1;
+                    return errno;
                 }
 
             } 
@@ -50,37 +53,37 @@ int main(int argc, char *argv[])
             // if there is a next command
             if (i < argc-1) {
 
-                // fprintf(stderr, "child process %s, closing new pipe read end %d, assigning stdout to new pipe write end, closing new pipe write end %d...\n", argv[i], newfd[0], newfd[1]);
                 if (close(newfd[0]) == -1) {
                     perror(child_error);
-                    return -1;
+                    return errno;
                 };
                 if (dup2(newfd[1], STDOUT_FILENO) == -1) {
                     perror(child_error);
-                    return -1;
+                    return errno;
                 };
                 if (close(newfd[1]) == -1) {
                     perror(child_error);
-                    return -1;
+                    return errno;
                 };
             }         
 
             if (execlp(argv[i], argv[i], NULL) == -1) {
                 perror(child_error);
-                return -1;
+                return errno;
             }
 
+        // parent process
         } else if (return_code > 0) {
 
             // if there was a previous command
             if (i > 1) {
                 if (close(oldfd[0]) == -1) {
                     perror(parent_error);
-                    return -1;
+                    return errno;
                 };
                 if (close(oldfd[1]) == -1) {
                     perror(parent_error);
-                    return -1;
+                    return errno;
                 };
             } 
 
@@ -101,7 +104,7 @@ int main(int argc, char *argv[])
 
         } else {
             fprintf(stderr, "Failed to create child process properly\n");
-            return -1;
+            return errno;
         }
 
     }

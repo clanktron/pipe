@@ -1,0 +1,124 @@
+# Week2
+
+- kernel uses file descriptors to read/write/interact
+```
+int fd = open("myfile.txt")
+```
+
+## Standard file descriptors
+
+0 - standard input
+1 - standard output
+2 - standard error
+default destination for all is the terminal
+
+- file descriptors are per process but can be shared with child processes
+
+Our goal: redirection (pipe)
+
+# Redirection
+
+- dup 
+    - finds the lowest available file descriptor, point it to the same location
+    - essentially duplicates output
+
+- dup2
+    - essentially redirects output
+
+example:
+```c
+int main(void) {
+        int fd = open ("my new file.txt", O_APPEND|OWRONLY);
+        if (fd < 0) printf("")
+    }
+```
+
+## Background Mechanics
+
+- process file descriptor table
+- system-wide open file table
+- system-wide i-node table
+(reference diagram from TA slides)
+
+- one can have multiple files descriptors point to the same entry
+- multiple processes (eg. parent and child) can have file descriptors that point to the same entry
+
+## Pipe operator
+
+- is an in memory buffer with read() and write() functions
+- blocking operation - will always wait until EOF is received
+
+## Background: spawning a new process
+
+- many ways to do such; some examples are fork() and execve()
+
+Step 1 - fork: a system call for the parent to divide(fork) itself into exact same two processes
+- the created child is an exact copy of the parent, but with a different process id
+
+Step 2 - exec: this will completely replace child process with another program
+- child process loses code and address space of the original program
+
+```c
+// takes program pathname as arg (to replace child process)
+int execve()
+// doesn't return if successful
+```
+# Zombie and Orphan processes
+
+Zombie process: cild process terminates, but stays in the process table
+Orphan: parent process terminates before clearing the status of child process
+- orphan processes are adopted by the init process
+
+- The child process status must be cleared from teh kernel process table by the parent process
+- Parent has 3 options to prevent zombie processes:
+
+- check status of child process with wait()/waitpid()
+- any errors in child processes should be reflected in the parent process status
+
+helpful macros:
+WIFEXITED
+WEXITSTATUS
+
+# Week 3 
+
+- reviewed forking and wait() from last discussion
+
+## Round Robin implementation
+
+Process struct: contains all process metadata
+
+process states:
+- new
+- ready
+- running
+- waiting
+- terminated
+
+### Context switch - dispatcher:
+- the hardware mechanism behind switching cpu tasks
+- will save processes to RAM when switching between such
+- triggered by: syscalls, timer interrupts, waiting for I/O
+- this has some overhead (saving/reloading is expensive)
+
+### Process scheduling - basic concepts:
+- preemptive scheduling vs non-preemptive scheduling
+- a preemptive resource allows the os to decide scheduling
+- non-preemptive resource always run to completion
+
+### Process scheduling - goals:
+- maximize efficiency
+    - minimize wait time and response time
+    - maximize cpu utilization
+
+### scheduling algorithms:
+
+- first come first served
+    - largest task acts as bottleneck
+
+- shortest job first
+
+- shortest remaining time first
+
+- round robin
+
+### Linked list macros are used for managing the process queue
